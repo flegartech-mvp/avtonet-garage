@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1280px; height: 800px; overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f5f5f5;
+  }
+
+  /* ── Browser chrome ─────────────────────────────────────── */
+  .browser {
+    width: 1280px; height: 800px;
+    display: flex; flex-direction: column;
+    background: #fff; border-radius: 0;
+  }
+  .browser-bar {
+    height: 52px; background: #202124;
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 14px; flex-shrink: 0;
+  }
+  .dots { display: flex; gap: 6px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #febc2e; }
+  .dot-g { background: #28c840; }
+  .url-bar {
+    flex: 1; height: 30px;
+    background: #303134; border-radius: 15px;
+    display: flex; align-items: center; gap: 8px;
+    padding: 0 14px; color: #bdc1c6; font-size: 13px;
+  }
+  .url-bar .lock { color: #8ab4f8; font-size: 11px; }
+  .ext-btn {
+    width: 28px; height: 28px; border-radius: 6px;
+    background: linear-gradient(135deg, #f47920, #d4610a);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .browser-tabs {
+    height: 36px; background: #292a2d;
+    display: flex; align-items: flex-end; padding: 0 14px;
+    flex-shrink: 0;
+  }
+  .tab {
+    height: 30px; padding: 0 16px;
+    display: flex; align-items: center; gap: 8px;
+    border-radius: 8px 8px 0 0; font-size: 12px;
+    white-space: nowrap; overflow: hidden; max-width: 220px;
+  }
+  .tab-active { background: #fff; color: #202124; }
+  .tab-inactive { background: #3c4043; color: #9aa0a6; margin-right: 2px; }
+  .tab-favicon {
+    width: 14px; height: 14px; border-radius: 2px;
+    background: #2c6fad; display: flex; align-items: center; justify-content: center;
+    font-size: 8px; color: white; font-weight: 700; flex-shrink: 0;
+  }
+  .tab-favicon-avto { background: #2c6fad; }
+  .tab-favicon-other { background: #ea4335; }
+
+  /* ── Page content ───────────────────────────────────────── */
+  .page { flex: 1; overflow: hidden; position: relative; background: #f0f2f5; }
+
+  /* avto.net header */
+  .site-header {
+    height: 56px; background: #2c6fad;
+    display: flex; align-items: center; padding: 0 28px; gap: 20px;
+    flex-shrink: 0;
+  }
+  .site-logo { color: #fff; font-size: 20px; font-weight: 800; letter-spacing: -0.02em; }
+  .site-nav { display: flex; gap: 18px; }
+  .site-nav a { color: rgba(255,255,255,0.8); font-size: 13px; text-decoration: none; }
+  .site-nav a:hover { color: #fff; }
+  .site-header-right { margin-left: auto; display: flex; gap: 10px; }
+  .site-btn {
+    padding: 6px 14px; border-radius: 5px; font-size: 12px; font-weight: 600;
+    cursor: pointer; border: none;
+  }
+  .site-btn-outline { background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3); }
+  .site-btn-primary { background: #fff; color: #2c6fad; }
+
+  /* listing breadcrumb */
+  .breadcrumb {
+    background: #fff; border-bottom: 1px solid #e0e0e0;
+    padding: 10px 28px; font-size: 12px; color: #666;
+    display: flex; gap: 6px; align-items: center;
+  }
+  .breadcrumb a { color: #2c6fad; text-decoration: none; }
+  .breadcrumb-sep { color: #bbb; }
+
+  /* Main listing layout */
+  .listing-layout {
+    display: flex; gap: 20px; padding: 20px 28px;
+    height: calc(800px - 52px - 36px - 56px - 37px);
+    overflow: hidden;
+  }
+
+  /* Left: photo + specs */
+  .listing-left { width: 520px; flex-shrink: 0; }
+
+  .listing-photo {
+    width: 100%; height: 300px; border-radius: 10px;
+    background: linear-gradient(135deg, #c9d6df, #e2ebf0);
+    position: relative; overflow: hidden; margin-bottom: 14px;
+  }
+  .listing-photo-car {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .photo-badge {
+    position: absolute; bottom: 12px; right: 12px;
+    background: rgba(0,0,0,0.6); color: #fff;
+    padding: 4px 10px; border-radius: 20px; font-size: 11px;
+  }
+  .photo-thumbs {
+    display: flex; gap: 8px;
+  }
+  .thumb {
+    width: 70px; height: 50px; border-radius: 6px;
+    background: linear-gradient(135deg, #dde3e8, #eef2f5);
+    flex-shrink: 0; border: 2px solid transparent;
+  }
+  .thumb:first-child { border-color: #2c6fad; }
+
+  /* specs table */
+  .specs-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 1px; background: #e8e8e8; border: 1px solid #e8e8e8;
+    border-radius: 8px; overflow: hidden; margin-top: 14px;
+  }
+  .spec-cell {
+    background: #fff; padding: 8px 12px;
+    display: flex; flex-direction: column;
+  }
+  .spec-label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
+  .spec-value { font-size: 13px; font-weight: 600; color: #222; }
+
+  /* Right: price box + advisor */
+  .listing-right { flex: 1; display: flex; flex-direction: column; gap: 14px; }
+
+  .listing-title { font-size: 20px; font-weight: 700; color: #1a1a1a; line-height: 1.25; margin-bottom: 4px; }
+  .listing-subtitle { font-size: 13px; color: #666; margin-bottom: 12px; }
+
+  .price-box {
+    background: #fff; border: 1px solid #e0e0e0; border-radius: 10px;
+    padding: 16px; display: flex; align-items: center; gap: 16px;
+  }
+  .price-main { font-size: 28px; font-weight: 800; color: #1a1a1a; }
+  .price-note { font-size: 11px; color: #888; }
+  .price-save-btn {
+    margin-left: auto; padding: 10px 20px; border-radius: 8px;
+    background: linear-gradient(135deg, #f47920, #d4610a);
+    color: #fff; font-size: 13px; font-weight: 700;
+    border: none; cursor: pointer; white-space: nowrap;
+    box-shadow: 0 3px 12px rgba(244,121,32,0.4);
+  }
+
+  /* ──────────────────────────────────────────────────────────
+     SMART ADVISOR PANEL (the hero element of this screenshot)
+     ────────────────────────────────────────────────────────── */
+  .advisor-panel {
+    background: #0f1924;
+    border: 1px solid rgba(244,121,32,0.3);
+    border-radius: 12px; overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.25), 0 0 0 1px rgba(244,121,32,0.1);
+  }
+
+  .advisor-header {
+    background: linear-gradient(90deg, rgba(244,121,32,0.18) 0%, rgba(244,121,32,0.06) 100%);
+    border-bottom: 1px solid rgba(244,121,32,0.2);
+    padding: 12px 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .advisor-header-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, #f47920, #d4610a);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .advisor-header-title { font-size: 13px; font-weight: 700; color: #ff9340; }
+  .advisor-header-sub { font-size: 11px; color: #64748b; margin-top: 1px; }
+
+  /* Score ring */
+  .advisor-score-area {
+    padding: 16px;
+    display: flex; gap: 16px; align-items: flex-start;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .score-ring-wrap { flex-shrink: 0; }
+  .score-ring-wrap svg { display: block; }
+  .score-breakdown { flex: 1; }
+  .score-title { font-size: 13px; font-weight: 700; color: #e2e8f0; margin-bottom: 8px; }
+
+  .score-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .score-bar-label { font-size: 10px; color: #64748b; width: 70px; flex-shrink: 0; }
+  .score-bar-track {
+    flex: 1; height: 5px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden;
+  }
+  .score-bar-fill { height: 100%; border-radius: 3px; }
+  .score-bar-val { font-size: 10px; font-weight: 700; width: 26px; text-align: right; flex-shrink: 0; }
+
+  .fill-green { background: linear-gradient(90deg, #22c55e, #16a34a); }
+  .fill-yellow { background: linear-gradient(90deg, #f59e0b, #d97706); }
+  .fill-orange { background: linear-gradient(90deg, #f47920, #d4610a); }
+  .fill-blue { background: linear-gradient(90deg, #3b82f6, #2563eb); }
+  .fill-red { background: linear-gradient(90deg, #ef4444, #dc2626); }
+
+  .c-green { color: #4ade80; }
+  .c-yellow { color: #fbbf24; }
+  .c-orange { color: #ff9340; }
+  .c-blue { color: #60a5fa; }
+  .c-red { color: #f87171; }
+
+  /* Verdict banner */
+  .verdict-banner {
+    margin: 0 16px 0; padding: 10px 14px;
+    border-radius: 8px; display: flex; align-items: center; gap: 10px;
+    background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.25);
+    margin-bottom: 12px;
+  }
+  .verdict-icon { font-size: 18px; }
+  .verdict-text { font-size: 12px; color: #a7f3d0; line-height: 1.4; }
+  .verdict-strong { font-weight: 700; color: #4ade80; }
+
+  /* Insight rows */
+  .advisor-insights { padding: 0 16px 14px; display: flex; flex-direction: column; gap: 7px; }
+  .insight-row {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 8px 10px; border-radius: 7px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+  }
+  .insight-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+  .insight-dot-green { background: #22c55e; }
+  .insight-dot-yellow { background: #f59e0b; }
+  .insight-dot-red { background: #ef4444; }
+  .insight-dot-blue { background: #3b82f6; }
+  .insight-body { }
+  .insight-title { font-size: 11px; font-weight: 600; color: #cbd5e1; margin-bottom: 2px; }
+  .insight-desc { font-size: 10.5px; color: #64748b; line-height: 1.45; }
+
+  /* Quick actions */
+  .advisor-actions {
+    padding: 12px 16px; border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex; gap: 8px;
+  }
+  .advisor-action-btn {
+    flex: 1; padding: 8px 10px; border-radius: 7px;
+    font-size: 11px; font-weight: 600; border: none; cursor: pointer;
+    text-align: center;
+  }
+  .btn-save-garage {
+    background: linear-gradient(135deg, #f47920, #d4610a);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(244,121,32,0.3);
+  }
+  .btn-compare {
+    background: rgba(255,255,255,0.06);
+    color: #94a3b8; border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  /* ── Floating label ─────────────────────────────────────── */
+  .injected-label {
+    position: absolute; top: 12px; right: 12px; z-index: 20;
+    background: rgba(244,121,32,0.92); color: #fff;
+    padding: 4px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 2px 8px rgba(244,121,32,0.4);
+  }
+
+  /* ── Seller info ────────────────────────────────────────── */
+  .seller-box {
+    background: #fff; border: 1px solid #e0e0e0; border-radius: 10px;
+    padding: 12px; display: flex; gap: 12px; align-items: center;
+  }
+  .seller-avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: linear-gradient(135deg, #e0e7ef, #c5d4e3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 700; color: #2c6fad; flex-shrink: 0;
+  }
+  .seller-name { font-size: 13px; font-weight: 600; color: #1a1a1a; }
+  .seller-rating { font-size: 11px; color: #888; margin-top: 2px; }
+  .seller-phone-btn {
+    margin-left: auto; padding: 8px 14px; border-radius: 7px;
+    background: #2c6fad; color: #fff; font-size: 12px; font-weight: 600;
+    border: none; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<div class="browser">
+
+  <!-- Browser bar -->
+  <div class="browser-bar">
+    <div class="dots">
+      <div class="dot dot-r"></div>
+      <div class="dot dot-y"></div>
+      <div class="dot dot-g"></div>
+    </div>
+    <div class="url-bar">
+      <span class="lock">🔒</span>
+      <span>avto.net/oglas/volkswagen-golf-8-2-0-tdi-150ks-highline-2021/1234567</span>
+    </div>
+    <div class="ext-btn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="1" y="3" width="15" height="13" rx="2"/>
+        <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+        <circle cx="5.5" cy="18.5" r="2.5"/>
+        <circle cx="18.5" cy="18.5" r="2.5"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="browser-tabs">
+    <div class="tab tab-inactive">
+      <div class="tab-favicon tab-favicon-other">G</div>
+      <span>Iskanje — avto.net</span>
+    </div>
+    <div class="tab tab-active">
+      <div class="tab-favicon tab-favicon-avto">A</div>
+      <span>VW Golf 8 2.0 TDI 150KS — avto.net</span>
+    </div>
+  </div>
+
+  <!-- Page -->
+  <div class="page">
+    <!-- avto.net header -->
+    <div class="site-header">
+      <div class="site-logo">avto.net</div>
+      <div class="site-nav">
+        <a href="#">Osebni</a>
+        <a href="#">Kombi</a>
+        <a href="#">Oldtimer</a>
+        <a href="#">Deli</a>
+        <a href="#">Servis</a>
+      </div>
+      <div class="site-header-right">
+        <button class="site-btn site-btn-outline">Prijava</button>
+        <button class="site-btn site-btn-primary">Objavi oglas</button>
+      </div>
+    </div>
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+      <a href="#">Domov</a>
+      <span class="breadcrumb-sep">›</span>
+      <a href="#">Osebni avtomobili</a>
+      <span class="breadcrumb-sep">›</span>
+      <a href="#">Volkswagen</a>
+      <span class="breadcrumb-sep">›</span>
+      <a href="#">Golf</a>
+      <span class="breadcrumb-sep">›</span>
+      <span>VW Golf 8 2.0 TDI 150KS Highline 2021</span>
+    </div>
+
+    <!-- Listing layout -->
+    <div class="listing-layout">
+
+      <!-- Left column -->
+      <div class="listing-left">
+        <!-- Main photo -->
+        <div class="listing-photo">
+          <!-- Stylised car silhouette -->
+          <div class="listing-photo-car">
+            <svg width="380" height="200" viewBox="0 0 380 200" fill="none">
+              <rect width="380" height="200" fill="url(#photoGrad)"/>
+              <defs>
+                <linearGradient id="photoGrad" x1="0" y1="0" x2="380" y2="200" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#c9d6e0"/>
+                  <stop offset="100%" stop-color="#dde8ee"/>
+                </linearGradient>
+              </defs>
+              <!-- Car body -->
+              <ellipse cx="190" cy="165" rx="150" ry="18" fill="rgba(0,0,0,0.12)"/>
+              <path d="M60 145 L75 110 Q90 85 130 80 L175 75 Q195 74 220 82 L260 95 Q295 105 310 120 L325 145 Z" fill="#3c4a5c"/>
+              <path d="M110 80 L115 58 Q120 48 140 46 L230 46 Q248 48 255 58 L260 80 Z" fill="#4a5a6b"/>
+              <!-- Windows -->
+              <path d="M118 80 L122 60 Q126 52 140 50 L185 50 L185 80 Z" fill="#a8c4d8" opacity="0.9"/>
+              <path d="M190 80 L190 50 L228 50 Q244 52 250 60 L254 80 Z" fill="#a8c4d8" opacity="0.9"/>
+              <!-- Wheels -->
+              <circle cx="115" cy="148" r="26" fill="#2a2e35"/>
+              <circle cx="115" cy="148" r="17" fill="#4a5060"/>
+              <circle cx="115" cy="148" r="8" fill="#aab0bc"/>
+              <circle cx="268" cy="148" r="26" fill="#2a2e35"/>
+              <circle cx="268" cy="148" r="17" fill="#4a5060"/>
+              <circle cx="268" cy="148" r="8" fill="#aab0bc"/>
+              <!-- Headlights -->
+              <ellipse cx="320" cy="132" rx="12" ry="6" fill="#f0f8ff" opacity="0.9"/>
+              <ellipse cx="62" cy="132" rx="10" ry="5" fill="#f0f8ff" opacity="0.7"/>
+            </svg>
+          </div>
+          <span class="photo-badge">📷 38 fotografij</span>
+          <span class="injected-label">AvtoNetGaraža</span>
+        </div>
+        <!-- Thumbs -->
+        <div class="photo-thumbs">
+          <div class="thumb"></div>
+          <div class="thumb" style="background:linear-gradient(135deg,#d5dce3,#e8edf2)"></div>
+          <div class="thumb" style="background:linear-gradient(135deg,#cfd8e0,#dce5ea)"></div>
+          <div class="thumb" style="background:linear-gradient(135deg,#d8e0e6,#e5edf2)"></div>
+          <div class="thumb" style="background:linear-gradient(135deg,#cdd6de,#dae3e8)"></div>
+          <div class="thumb" style="opacity:.5; display:flex; align-items:center; justify-content:center; font-size:12px; color:#888">+33</div>
+        </div>
+
+        <!-- Specs grid -->
+        <div class="specs-grid">
+          <div class="spec-cell"><span class="spec-label">Letnik</span><span class="spec-value">2021</span></div>
+          <div class="spec-cell"><span class="spec-label">Prevoženi km</span><span class="spec-value">62.400 km</span></div>
+          <div class="spec-cell"><span class="spec-label">Motor</span><span class="spec-value">2.0 TDI · 110 kW</span></div>
+          <div class="spec-cell"><span class="spec-label">Gorivo</span><span class="spec-value">Diesel</span></div>
+          <div class="spec-cell"><span class="spec-label">Menjalnik</span><span class="spec-value">Ročni · 6-stop.</span></div>
+          <div class="spec-cell"><span class="spec-label">Barva</span><span class="spec-value">Siva metalik</span></div>
+        </div>
+      </div>
+
+      <!-- Right column -->
+      <div class="listing-right">
+        <div class="listing-title">Volkswagen Golf 8 2.0 TDI 150KS Highline</div>
+        <div class="listing-subtitle">2021 · 62.400 km · Diesel · Ljubljana · Oglas #1234567</div>
+
+        <!-- Price box -->
+        <div class="price-box">
+          <div>
+            <div class="price-main">22.900 €</div>
+            <div class="price-note">DDV vključen · Možna zamenjava</div>
+          </div>
+          <button class="price-save-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline;vertical-align:-2px;margin-right:5px">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+            </svg>
+            Shrani v garažo
+          </button>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════
+             SMART ADVISOR PANEL — injected by extension
+             ═══════════════════════════════════════════════════ -->
+        <div class="advisor-panel">
+          <div class="advisor-header">
+            <div class="advisor-header-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+            </div>
+            <div>
+              <div class="advisor-header-title">Pametni Svetovalec — AvtoNetGaraža</div>
+              <div class="advisor-header-sub">Analiza oglasa na podlagi 847 podobnih vozil</div>
+            </div>
+          </div>
+
+          <!-- Score + bars -->
+          <div class="advisor-score-area">
+            <div class="score-ring-wrap">
+              <svg width="72" height="72" viewBox="0 0 36 36">
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="3.5"/>
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#22c55e" stroke-width="3.5"
+                  stroke-dasharray="99.9" stroke-dashoffset="22" stroke-linecap="round"
+                  transform="rotate(-90 18 18)"/>
+                <text x="18" y="16" text-anchor="middle" fill="#e2e8f0" font-size="7.5" font-weight="800" font-family="sans-serif">78</text>
+                <text x="18" y="24" text-anchor="middle" fill="#4ade80" font-size="4.5" font-family="sans-serif">/100</text>
+              </svg>
+              <div style="text-align:center; font-size:9px; color:#4ade80; font-weight:700; margin-top:2px">DOBRO</div>
+            </div>
+
+            <div class="score-breakdown">
+              <div class="score-title">Skupna ocena vozila</div>
+              <div class="score-bar-row">
+                <span class="score-bar-label">Cena</span>
+                <div class="score-bar-track"><div class="score-bar-fill fill-green" style="width:82%"></div></div>
+                <span class="score-bar-val c-green">82</span>
+              </div>
+              <div class="score-bar-row">
+                <span class="score-bar-label">Kilometrina</span>
+                <div class="score-bar-track"><div class="score-bar-fill fill-yellow" style="width:71%"></div></div>
+                <span class="score-bar-val c-yellow">71</span>
+              </div>
+              <div class="score-bar-row">
+                <span class="score-bar-label">Starost</span>
+                <div class="score-bar-track"><div class="score-bar-fill fill-green" style="width:88%"></div></div>
+                <span class="score-bar-val c-green">88</span>
+              </div>
+              <div class="score-bar-row">
+                <span class="score-bar-label">Oprema</span>
+                <div class="score-bar-track"><div class="score-bar-fill fill-blue" style="width:76%"></div></div>
+                <span class="score-bar-val c-blue">76</span>
+              </div>
+              <div class="score-bar-row">
+                <span class="score-bar-label">Karoserija</span>
+                <div class="score-bar-track"><div class="score-bar-fill fill-orange" style="width:60%"></div></div>
+                <span class="score-bar-val c-orange">60</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Verdict -->
+          <div style="padding: 12px 16px 0;">
+            <div class="verdict-banner">
+              <span class="verdict-icon">✅</span>
+              <div class="verdict-text">
+                <span class="verdict-strong">Cena je ugodna.</span> Vozilo je ocenejeno ~8 % pod tržno vrednostjo (24.900 €) za primerljive modele. Upoštevajte nekoliko višjo kilometrino za letnik.
+              </div>
+            </div>
+          </div>
+
+          <!-- Insights -->
+          <div class="advisor-insights">
+            <div class="insight-row">
+              <div class="insight-dot insight-dot-green"></div>
+              <div class="insight-body">
+                <div class="insight-title">Cena pod tržnim povprečjem</div>
+                <div class="insight-desc">22.900 € vs. povprečje 24.900 € za Golf 8 2.0 TDI letnik 2021 z do 70.000 km. Prihranek ≈ 2.000 €.</div>
+              </div>
+            </div>
+            <div class="insight-row">
+              <div class="insight-dot insight-dot-yellow"></div>
+              <div class="insight-body">
+                <div class="insight-title">Kilometrina rahlo nadpovprečna</div>
+                <div class="insight-desc">62.400 km za 4-letno vozilo = ~15.600 km/leto (povprečje je 13.000 km/leto). Preverite stanje vzdrževanja.</div>
+              </div>
+            </div>
+            <div class="insight-row">
+              <div class="insight-dot insight-dot-green"></div>
+              <div class="insight-body">
+                <div class="insight-title">Highline oprema — vrednost +1.800 €</div>
+                <div class="insight-desc">Paket Highline vključuje adaptivni tempomat, LED Matrix luči in 17″ platišča. Nadgradnja vrednoti vozilo višje.</div>
+              </div>
+            </div>
+            <div class="insight-row">
+              <div class="insight-dot insight-dot-blue"></div>
+              <div class="insight-body">
+                <div class="insight-title">Oglas aktiven 12 dni</div>
+                <div class="insight-desc">Prodajalec ni znižal cene. Dobra pogajalska izhodišče — preizkusite ponudbo do 21.500 €.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="advisor-actions">
+            <button class="advisor-action-btn btn-save-garage">
+              ＋ Shrani v garažo
+            </button>
+            <button class="advisor-action-btn btn-compare">
+              ⚖ Primerjaj podobne
+            </button>
+          </div>
+        </div>
+
+        <!-- Seller -->
+        <div class="seller-box">
+          <div class="seller-avatar">M</div>
+          <div>
+            <div class="seller-name">Miha Kovačič — Zasebnik</div>
+            <div class="seller-rating">⭐ 4.8 · 12 oglasov · Član od 2018</div>
+          </div>
+          <button class="seller-phone-btn">📞 Pokaži telefon</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

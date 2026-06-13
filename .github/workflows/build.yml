@@ -1,0 +1,47 @@
+name: Build & Package
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate extension
+        run: npm run validate
+
+      - name: Verify dist output
+        run: |
+          echo "=== dist contents ==="
+          ls -lh dist/
+          echo "=== manifest version ==="
+          cat dist/manifest.json
+
+      - name: Package ZIP
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          cd dist && zip -r "../avtonet-garaza-${VERSION}.zip" .
+          echo "ARTIFACT=avtonet-garaza-${VERSION}.zip" >> $GITHUB_ENV
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-zip
+          path: avtonet-garaza-*.zip
+          retention-days: 30

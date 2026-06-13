@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate extension
+        run: npm run validate
+
+      - name: Package ZIP
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          cd dist && zip -r "../avtonet-garaza-${VERSION}.zip" .
+          echo "ZIP=avtonet-garaza-${VERSION}.zip" >> $GITHUB_ENV
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "AvtoNetGaraža v${{ env.VERSION }}"
+          body: |
+            ## AvtoNetGaraža v${{ env.VERSION }}
+
+            ### Install
+            1. Download `avtonet-garaza-${{ env.VERSION }}.zip`
+            2. Unzip it
+            3. Open `chrome://extensions`, enable **Developer mode**
+            4. Click **Load unpacked** → select the unzipped folder
+          files: ${{ env.ZIP }}
+          draft: false
+          prerelease: false
