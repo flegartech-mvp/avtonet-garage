@@ -9,7 +9,8 @@
         "test": "vitest run",
         "clean": "rimraf dist",
         "validate": "npm run lint && npm run test && npm audit --audit-level=high && npm run build",
-        "package": "npm run build && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package-extension.ps1"
+        "package": "npm run build && node scripts/package-extension.mjs",
+        "package:win": "npm run build && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package-extension.ps1"
     },
     "dependencies": {
         "react": "^18.2.0",
