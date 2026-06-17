@@ -7,3 +7,21 @@ Thumbs.db
 npm-debug.log*
 .env
 .env.local
+
+# --- repo cleanup hygiene (added) ---
+build/
+out/
+.next/
+.turbo/
+.vite/
+.cache/
+coverage/
+test-results/
+playwright-report/
+output/
+tmp/
+*.swp
+*.bak
+*.orig
+.env.*.local
+promo/
