@@ -98,6 +98,8 @@ export default function FolderManager({ folders, vehicles, onDataChange }) {
             value={name}
             onChange={(e) => { setName(e.target.value); setError(''); }}
             maxLength={40}
+            aria-label="Ime mape"
+            aria-invalid={Boolean(error)}
           />
           {error && <div className="folder-form-error">{error}</div>}
           <div className="color-picker">
@@ -108,7 +110,7 @@ export default function FolderManager({ folders, vehicles, onDataChange }) {
                 className={`color-swatch ${color === c ? 'active' : ''}`}
                 style={{ background: c }}
                 onClick={() => setColor(c)}
-                aria-label={c}
+                aria-label={`Barva mape ${c}`}
               />
             ))}
           </div>
@@ -169,7 +171,13 @@ function FolderRow({ folder, count, onEdit, onDelete }) {
       </div>
       {!folder.locked ? (
         <div className="folder-row-actions">
-          <button className="icon-btn-sm" title="Uredi" onClick={() => onEdit(folder)}>
+          <button
+            className="icon-btn-sm"
+            title="Uredi"
+            type="button"
+            aria-label={`Uredi mapo ${folder.name}`}
+            onClick={() => onEdit(folder)}
+          >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
               <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -178,6 +186,8 @@ function FolderRow({ folder, count, onEdit, onDelete }) {
           <button
             className={`icon-btn-sm ${confirmDelete ? 'icon-btn-sm--confirm' : 'icon-btn-sm--danger'}`}
             title={confirmDelete ? 'Klikni znova za potrditev' : 'Izbriši mapo'}
+            type="button"
+            aria-label={confirmDelete ? `Potrdi izbris mape ${folder.name}` : `Izbriši mapo ${folder.name}`}
             onClick={handleDeleteClick}
           >
             {confirmDelete ? (

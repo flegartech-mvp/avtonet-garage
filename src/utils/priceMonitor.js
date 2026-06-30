@@ -5,9 +5,7 @@
 
 import { parseEuroPrice } from './parsePrice.js';
 
-// ─── Fetch with timeout (Bug 16) ─────────────────────────────────────────────
-// Previously there was no timeout — a slow/hanging avto.net response would
-// block the monitoring batch indefinitely.
+// ─── Fetch with timeout ──────────────────────────────────────────────────────
 
 async function fetchPage(url) {
   const controller = new AbortController();
@@ -61,14 +59,9 @@ function extractFromHtml(html) {
     }
   }
 
-  // Bug 17 fix: use the shared parser so content-script and monitor agree
   const priceNum = parseEuroPrice(priceText);
 
-  // ─── Sold detection (Bug 4) ───────────────────────────────────────────────
-  // Previously checked doc.body.textContent for "prodano" which matched the
-  // sidebar section "Podobna prodana vozila" on every active listing.
-  // Fix: require the word to appear in the page title element or a dedicated
-  // sold badge, not anywhere in the full body text.
+  // ─── Sold detection ───────────────────────────────────────────────────────
   const titleEl = doc.querySelector('h1');
   const titleText = (titleEl?.textContent ?? '').toLowerCase();
   const soldBadge = doc.querySelector('.sold-badge, .prodano-badge, [class*="sold-badge"]');
@@ -82,11 +75,7 @@ function extractFromHtml(html) {
     bodyText.includes('ni več na voljo') ||
     bodyText.includes('oglas je bil umaknjen');
 
-  // ─── Removed detection (Bug 5) ───────────────────────────────────────────
-  // Previously `!title` alone triggered "removed", which fired on any CAPTCHA,
-  // login-redirect, or Cloudflare challenge page — mass-marking all vehicles
-  // removed in a single bad check cycle.
-  // Fix: require two independent signals, or one of the explicit error strings.
+  // ─── Removed detection ────────────────────────────────────────────────────
   const title = titleEl?.textContent?.trim() ?? '';
   const isRemoved =
     bodyText.includes('oglas ni najden') ||
@@ -100,9 +89,6 @@ function extractFromHtml(html) {
 export async function checkVehicle(vehicle) {
   const { html, status } = await fetchPage(vehicle.url);
 
-  // Bug 2 fix: a network error (status 0 = timeout / offline / CORS) must NOT
-  // mark the vehicle as removed.  Previously `!html` caught status-0 and
-  // permanently killed tracking for the listing on the first flaky request.
   if (status === 0) {
     return { changed: false, vehicleId: vehicle.id }; // transient — try again next cycle
   }
@@ -140,8 +126,6 @@ export async function checkVehicle(vehicle) {
   }
 
   // ─── Price change ─────────────────────────────────────────────────────────
-  // Bug 17 fix: use shared parseEuroPrice instead of local parsePrice so the
-  // saved priceNum and the freshly-extracted priceNum are always comparable.
   const savedPrice = vehicle.priceNum ?? parseEuroPrice(vehicle.price);
   const newPrice = current.priceNum;
 

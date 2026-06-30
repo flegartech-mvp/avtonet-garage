@@ -113,11 +113,10 @@ npm run validate     # tests + high-severity audit + production build
 npm run clean        # remove dist/ cross-platform
 ```
 
-Recommended Chrome extension reloader: [Extensions Reloader](https://chrome.google.com/webstore/detail/extensions-reloader/fimgfedafeadlieiabdeeaodndnlbhid)
+After rebuilding, reload the unpacked extension from `chrome://extensions`.
 
 ---
 
 ## Support
 
-A **Podpri razvoj** button is available in Settings:
-[paypal.me/TiniFlegar](https://paypal.me/TiniFlegar)
+A **Podpri razvoj** button is available in Settings.

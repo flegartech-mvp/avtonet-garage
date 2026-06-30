@@ -63,6 +63,4 @@ You can:
 
 ## Contact
 
-If you have questions about this privacy policy, contact the developer through the repository issues page:
-
-`https://github.com/flegartech-mvp/AvtoNetGarage/issues`
+If you have questions about this privacy policy, contact the developer through the Chrome Web Store support channel listed for the extension.

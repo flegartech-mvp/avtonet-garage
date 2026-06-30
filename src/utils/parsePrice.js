@@ -2,10 +2,6 @@
  * Shared Euro-price parser used by both the content script (vehicleParser.js)
  * and the background monitor (priceMonitor.js).
  *
- * Bug 17 fix: previously each file had its own slightly different implementation
- * which could produce diverging results, causing the monitor to see a "price
- * change" that was really just a parsing inconsistency.
- *
  * Handles Slovenian/European formatting:
  *   "12.500 €"     → 12500
  *   "12.500,99 €"  → 12500.99

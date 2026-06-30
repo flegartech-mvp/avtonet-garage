@@ -19,7 +19,6 @@ const ALARM_NAME = 'ag_check_vehicles';
 chrome.runtime.onInstalled.addListener(async () => {
   const settings = await getSettings();
   scheduleAlarm(settings.checkIntervalMinutes);
-  console.log('[AvtoGarage] Installed. Monitoring every', settings.checkIntervalMinutes, 'minutes.');
 });
 
 chrome.runtime.onStartup.addListener(async () => {
@@ -28,8 +27,6 @@ chrome.runtime.onStartup.addListener(async () => {
 });
 
 function scheduleAlarm(intervalMinutes) {
-  // Bug 23 fix: Chrome enforces a minimum alarm period of 1 minute.
-  // Guard against 0, NaN, or negative values from corrupted settings.
   const safeInterval = normalizeInterval(intervalMinutes);
   chrome.alarms.clear(ALARM_NAME, () => {
     chrome.alarms.create(ALARM_NAME, {
@@ -61,13 +58,9 @@ async function runMonitoringCycle() {
   }
 
   await saveSettings({ lastChecked: Date.now() });
-  console.log('[AvtoGarage] Monitoring cycle complete.');
 }
 
 async function handleVehicleCheck(vehicle) {
-  // Bug 6 fix: also skip sold vehicles — they don't need repeated polling.
-  // Previously only 'removed' was skipped, so every sold listing wasted a
-  // fetch on every monitoring cycle forever.
   if (vehicle.status === 'removed' || vehicle.status === 'sold') return;
 
   try {
@@ -76,9 +69,9 @@ async function handleVehicleCheck(vehicle) {
 
     // Persist updated status
     const statusPatch = {
-      status: result.type === 'price_change' ? vehicle.status ?? 'active' : result.type,
+      status: result.type,
       lastChecked: Date.now(),
-      consecutiveFailures: 0, // reset on a successful check that returned a result
+      consecutiveFailures: 0,
     };
     if (result.type === 'price_change') {
       statusPatch.priceHistory = [
@@ -112,6 +105,10 @@ async function handleVehicleCheck(vehicle) {
     }
   } catch (err) {
     console.warn('[AvtoGarage] Check failed for', vehicle.url, err);
+    await updateVehicleStatus(vehicle.id, {
+      lastChecked: Date.now(),
+      consecutiveFailures: (vehicle.consecutiveFailures ?? 0) + 1,
+    });
   }
 }
 

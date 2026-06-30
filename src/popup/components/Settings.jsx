@@ -45,8 +45,14 @@ export default function Settings({ settings, onDataChange }) {
   async function handleExport() {
     try {
       const data = await exportData();
-      await navigator.clipboard.writeText(JSON.stringify(data, null, 2));
-      setStatus('Izvoz je kopiran v odložišče.');
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `avtonet-garaza-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      setStatus('Izvoz je pripravljen kot JSON datoteka.');
     } catch (err) {
       setStatus(err.message ?? 'Izvoza ni bilo mogoče kopirati.');
     }
@@ -87,6 +93,7 @@ export default function Settings({ settings, onDataChange }) {
               type="checkbox"
               checked={notificationsEnabled}
               onChange={handleNotificationsChange}
+              aria-label="Vklopi ali izklopi Chrome obvestila"
             />
             <span className="switch-slider" />
           </label>
@@ -117,7 +124,7 @@ export default function Settings({ settings, onDataChange }) {
         <div className="settings-row">
           <div>
             <h3>Podatki</h3>
-            <p>Podatki ostanejo lokalno v brskalniku. Izvoz kopira JSON varnostno kopijo.</p>
+            <p>Podatki ostanejo lokalno v brskalniku. Izvoz prenese JSON varnostno kopijo.</p>
           </div>
           <div className="settings-actions">
             <button type="button" className="btn-secondary" onClick={handleExport}>
@@ -142,7 +149,7 @@ export default function Settings({ settings, onDataChange }) {
         <button
           type="button"
           className="btn-secondary"
-          onClick={() => chrome.tabs.create({ url: 'https://paypal.me/TiniFlegar' })}
+          onClick={() => chrome.tabs.create({ url: 'https://www.paypal.com/paypalme/TiniFlegar' })}
         >
           Podpri razvoj
         </button>

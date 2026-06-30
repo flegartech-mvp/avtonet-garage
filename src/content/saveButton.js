@@ -8,10 +8,6 @@ import { analyzeVehicle } from './smartAdvisor.js';
 
 let buttonInjected = false;
 let advisorInjected = false;
-
-// Bug 3 fix: expose a reset so content/index.js can clear these flags when the
-// SPA navigates to a new page.  Previously the module-level booleans were never
-// reset, so the save button disappeared permanently after the first navigation.
 export function resetInjectionState() {
   buttonInjected = false;
   advisorInjected = false;
@@ -70,7 +66,6 @@ async function handleSaveClick() {
           <polyline points="20 6 9 17 4 12"/>
         </svg>
       `;
-      // Bug 19 fix: truncate long titles so the toast doesn't overflow
       const shortTitle = vehicle.title.length > 45
         ? vehicle.title.slice(0, 42) + '…'
         : vehicle.title;
@@ -125,9 +120,19 @@ export function injectAdvisorPanel() {
     document.body.appendChild(panel);
   }
 
-  // Toggle expand/collapse
-  panel.querySelector('.ag-advisor-header').addEventListener('click', () => {
+  const header = panel.querySelector('.ag-advisor-header');
+  const togglePanel = () => {
     panel.classList.toggle('ag-advisor--collapsed');
+    const expanded = !panel.classList.contains('ag-advisor--collapsed');
+    header.setAttribute('aria-expanded', String(expanded));
+    panel.querySelector('.ag-collapse-btn')?.setAttribute('aria-expanded', String(expanded));
+  };
+
+  header.addEventListener('click', togglePanel);
+  header.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    togglePanel();
   });
 }
 
@@ -143,10 +148,6 @@ function buildAdvisorHTML(analysis) {
   const scoreColor =
     score >= 62 ? '#22c55e' : score >= 38 ? '#f59e0b' : '#ef4444';
 
-  // Bug 11 fix: compute the exact SVG circumference from the radius instead of
-  // relying on the magic coincidence that 2π×15.9 ≈ 100.  Both stroke-dasharray
-  // and stroke-dashoffset are now derived from the real circumference so the
-  // ring renders correctly regardless of CSS or browser rounding differences.
   const RADIUS = 15.9;
   const CIRCUMFERENCE = +(2 * Math.PI * RADIUS).toFixed(2); // ≈ 99.90
   const dashOffset = +(CIRCUMFERENCE * (1 - score / 100)).toFixed(2);
@@ -157,7 +158,7 @@ function buildAdvisorHTML(analysis) {
       : '';
 
   return `
-    <div class="ag-advisor-header">
+    <div class="ag-advisor-header" role="button" tabindex="0" aria-expanded="true">
       <div class="ag-advisor-logo">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
@@ -175,7 +176,7 @@ function buildAdvisorHTML(analysis) {
         </svg>
         <span class="ag-score-num">${score}</span>
       </div>
-      <button class="ag-collapse-btn" aria-label="Toggle">▾</button>
+      <button class="ag-collapse-btn" type="button" aria-label="Prikaži ali skrij pametni svetovalec" aria-expanded="true">▾</button>
     </div>
 
     <div class="ag-advisor-body">

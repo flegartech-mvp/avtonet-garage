@@ -47,6 +47,13 @@
   transform: translateY(0) scale(0.97);
 }
 
+#ag-save-btn:focus-visible,
+.ag-collapse-btn:focus-visible,
+.ag-advisor-header:focus-visible {
+  outline: 3px solid #ffb86b;
+  outline-offset: 3px;
+}
+
 #ag-save-btn[data-state="saving"] {
   background: linear-gradient(135deg, #d4610a, #b85108);
   pointer-events: none;
@@ -326,4 +333,29 @@
   background: #1e1b4b;
   border: 1px solid #3730a3;
   color: #a5b4fc;
+}
+
+@media (max-width: 640px) {
+  #ag-save-btn {
+    right: 16px;
+    bottom: 18px;
+    max-width: calc(100vw - 32px);
+  }
+
+  #ag-advisor {
+    margin: 14px 10px;
+  }
+
+  .ag-advisor-header {
+    flex-wrap: wrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #ag-save-btn,
+  #ag-toast,
+  .ag-ring-fill,
+  .ag-collapse-btn {
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -1,13 +1,3 @@
-/**
- * Bug 24 fix: React function components have no built-in way to catch render
- * errors.  Without an ErrorBoundary, any uncaught exception during render
- * (e.g. accessing a property on a corrupted vehicle object in storage) blanks
- * the entire popup with no message and no recovery path.
- *
- * This class-based boundary wraps the whole App tree.  On error it shows a
- * minimal recovery UI instead of a blank screen.
- */
-
 import React from 'react';
 
 export default class ErrorBoundary extends React.Component {

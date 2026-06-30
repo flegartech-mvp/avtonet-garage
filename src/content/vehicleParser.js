@@ -100,8 +100,6 @@ export function parsePrice() {
   return '';
 }
 
-// Bug 17 fix: delegate to the shared utility so content-script and background
-// monitor always parse prices identically.
 export function parsePriceNum(priceStr) {
   return parseEuroPrice(priceStr);
 }
@@ -345,13 +343,13 @@ export function isDetailPage() {
     return true;
   }
 
-  // Bug 18 fix: the previous fallback checked document.body.textContent for
-  // any € price, which matched every search-results page (they all have prices
-  // in the listing cards).  Scope the price check to the main content container
-  // so we don't inject the save button onto search/listing pages.
-  const mainArea = document.querySelector(
-    'main, article, .ClassifiedAdContainer, #ClassifiedAd, .oglas-detail'
+  const explicitDetailArea = document.querySelector(
+    '.ClassifiedAdContainer, #ClassifiedAd, .oglas-detail, .vehicle-detail, [class*="detail"]'
   );
+  const hasSellerContext = document.querySelector(
+    '.contact-section, .kontakt, #kontakt, .seller-section, .ClassifiedAdContact, [class*="seller"]'
+  );
+  const mainArea = explicitDetailArea || (hasSellerContext && document.querySelector('main, article'));
   if (!mainArea) return false;
   return (
     !!document.querySelector('h1') &&
@@ -365,11 +363,6 @@ export function generateVehicleId(url) {
   const match = url.match(/[?&]id=(\w+)/i);
   if (match) return `avto_${match[1]}`;
 
-  // Bug 21 + 22 fix: the old 32-bit hash had a non-trivial collision probability
-  // with 100+ vehicles.  More critically, UTM/referral params on the same listing
-  // URL produced different hashes → duplicate entries for the same car.
-  // Fix: strip known tracking parameters before hashing, then use a 53-bit
-  // cyrb53 hash which has far lower collision probability.
   let cleanUrl = url;
   try {
     const u = new URL(url);

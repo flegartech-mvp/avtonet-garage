@@ -97,10 +97,11 @@ export default function Header({
           onKeyDown={handleSearchKeyDown}
           aria-label="Iskanje vozil"
         />
-        {searchQuery && (
+          {searchQuery && (
           <button
             className="search-clear"
             onClick={() => onSearchChange('')}
+            type="button"
             aria-label="Počisti iskanje"
           >✕</button>
         )}

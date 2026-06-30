@@ -11,8 +11,6 @@ const STATUS_CONFIG = {
 export default function VehicleCard({ vehicle, folders, onSelect, onDataChange }) {
   const [showMoveMenu, setShowMoveMenu] = useState(false);
   const [removing, setRemoving] = useState(false);
-  // Bug 14 fix: two-step delete confirmation.  First click arms the button;
-  // second click within 3 s executes the delete.  Auto-disarms after timeout.
   const [confirmDelete, setConfirmDelete] = useState(false);
   const confirmTimer = useRef(null);
 
@@ -21,20 +19,12 @@ export default function VehicleCard({ vehicle, folders, onSelect, onDataChange }
   const status = STATUS_CONFIG[vehicle.status] ?? STATUS_CONFIG.active;
   const thumb = vehicle.images?.[0];
 
-  // Bug 15 fix: show the most-recent price change (last vs second-to-last),
-  // not the total delta from the original save price.  The old formula used
-  // history[last] - history[0] which was misleading when prices bounced
-  // (e.g. 10k → 9k → 9.5k showed −500 € rather than +500 € most recently).
-  // Also guard priceDiff === 0 so we don't render a meaningless "0 €" badge.
   const history = vehicle.priceHistory ?? [];
   const priceChanged = history.length >= 2;
   const priceDiff = priceChanged
     ? history[history.length - 1].price - history[history.length - 2].price
     : null;
 
-  // Bug 20 fix: close the move-to-folder dropdown when the user clicks
-  // anywhere outside of it.  Previously the menu had no click-outside handler
-  // so multiple cards could have open menus simultaneously.
   useEffect(() => {
     if (!showMoveMenu) return;
     function handleOutsideClick(e) {
@@ -52,7 +42,6 @@ export default function VehicleCard({ vehicle, folders, onSelect, onDataChange }
   async function handleRemove(e) {
     e.stopPropagation();
 
-    // Bug 14 fix: first click → arm confirmation state; second click → delete
     if (!confirmDelete) {
       setConfirmDelete(true);
       confirmTimer.current = setTimeout(() => setConfirmDelete(false), 3000);
@@ -79,6 +68,14 @@ export default function VehicleCard({ vehicle, folders, onSelect, onDataChange }
     <div
       className={`vehicle-card ${removing ? 'removing' : ''} ${vehicle.status !== 'active' ? 'card--faded' : ''}`}
       onClick={() => onSelect(vehicle)}
+      role="button"
+      tabIndex="0"
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect(vehicle);
+        }
+      }}
     >
       {/* Thumbnail */}
       <div className="card-thumb">
@@ -138,6 +135,9 @@ export default function VehicleCard({ vehicle, folders, onSelect, onDataChange }
           <button
             className="card-action-btn"
             title="Premakni v mapo"
+            type="button"
+            aria-label="Premakni v mapo"
+            aria-expanded={showMoveMenu}
             onClick={(e) => { e.stopPropagation(); setShowMoveMenu((v) => !v); }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -150,6 +150,7 @@ export default function VehicleCard({ vehicle, folders, onSelect, onDataChange }
                 <button
                   key={f.id}
                   className={`action-menu-item ${vehicle.folderId === f.id ? 'active' : ''}`}
+                  type="button"
                   onClick={(e) => handleMove(e, f.id)}
                   style={{ '--dot-color': f.color }}
                 >
@@ -165,6 +166,8 @@ export default function VehicleCard({ vehicle, folders, onSelect, onDataChange }
         <button
           className="card-action-btn"
           title="Odpri oglas"
+          type="button"
+          aria-label="Odpri oglas"
           onClick={(e) => { e.stopPropagation(); chrome.tabs.create({ url: vehicle.url }); }}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -173,10 +176,11 @@ export default function VehicleCard({ vehicle, folders, onSelect, onDataChange }
           </svg>
         </button>
 
-        {/* Remove — two-step confirmation (Bug 14) */}
         <button
           className={`card-action-btn card-action-btn--danger ${confirmDelete ? 'card-action-btn--confirm' : ''}`}
           title={confirmDelete ? 'Klikni znova za potrditev' : 'Odstrani iz garaže'}
+          type="button"
+          aria-label={confirmDelete ? 'Potrdi odstranitev iz garaže' : 'Odstrani iz garaže'}
           onClick={handleRemove}
         >
           {confirmDelete ? (

@@ -22,6 +22,7 @@ export default function App() {
   const [activeFolder, setActiveFolder] = useState('all');
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [checking, setChecking] = useState(false);
 
@@ -36,12 +37,14 @@ export default function App() {
     setFolders(f);
     setNotifications(n);
     setSettings(s);
+    setLoadError('');
     setLoading(false);
   }, []);
 
   useEffect(() => {
     loadData().catch((err) => {
       console.error('[AvtoGaraža] Failed to load data', err);
+      setLoadError('Podatkov ni bilo mogoče naložiti. Zaprite in znova odprite razširitev.');
       setLoading(false);
     });
   }, [loadData]);
@@ -76,6 +79,7 @@ export default function App() {
       await loadData();
     } catch (err) {
       console.error('[AvtoGaraža] Force check failed', err);
+      setLoadError('Preverjanje trenutno ni uspelo. Poskusite znova pozneje.');
     } finally {
       setChecking(false);
     }
@@ -118,11 +122,19 @@ export default function App() {
       />
 
       <div className="app-body">
+        {loadError && (
+          <div className="app-alert" role="alert">
+            {loadError}
+          </div>
+        )}
+
         {view === 'dashboard' && (
           <Dashboard
             vehicles={filteredVehicles}
+            allVehicles={vehicles}
             folders={folders}
             activeFolder={activeFolder}
+            searchQuery={searchQuery}
             onFolderChange={setActiveFolder}
             onSelectVehicle={setSelectedVehicle}
             onDataChange={loadData}

@@ -13,8 +13,10 @@ const STATUS_ORDER = { active: 0, price_change: 1, sold: 2, removed: 3 };
 
 export default function Dashboard({
   vehicles,
+  allVehicles,
   folders,
   activeFolder,
+  searchQuery,
   onFolderChange,
   onSelectVehicle,
   onDataChange,
@@ -39,24 +41,26 @@ export default function Dashboard({
   }, [vehicles, sort]);
 
   const folderCounts = useMemo(() => {
-    const counts = { all: vehicles.length };
-    vehicles.forEach((v) => {
+    const source = allVehicles ?? vehicles;
+    const counts = { all: source.length };
+    source.forEach((v) => {
       counts[v.folderId] = (counts[v.folderId] ?? 0) + 1;
     });
     return counts;
-  }, [vehicles]);
+  }, [allVehicles, vehicles]);
 
   // Count alerts for sidebar badges
   const alertCounts = useMemo(() => {
+    const source = allVehicles ?? vehicles;
     const counts = {};
-    vehicles.forEach((v) => {
+    source.forEach((v) => {
       if (v.status === 'price_change' || v.status === 'sold' || v.status === 'removed') {
         counts['all'] = (counts['all'] ?? 0) + 1;
         counts[v.folderId] = (counts[v.folderId] ?? 0) + 1;
       }
     });
     return counts;
-  }, [vehicles]);
+  }, [allVehicles, vehicles]);
 
   return (
     <div className="dashboard">
@@ -68,6 +72,7 @@ export default function Dashboard({
             className={`folder-tab ${activeFolder === folder.id ? 'active' : ''}`}
             onClick={() => onFolderChange(folder.id)}
             style={{ '--folder-color': folder.color }}
+            type="button"
           >
             <span className="folder-dot" />
             <span className="folder-tab-name">{folder.name}</span>
@@ -100,7 +105,7 @@ export default function Dashboard({
         )}
 
         {sorted.length === 0 ? (
-          <EmptyState activeFolder={activeFolder} />
+          <EmptyState activeFolder={activeFolder} searchQuery={searchQuery} />
         ) : (
           <div className="vehicle-grid">
             {sorted.map((vehicle) => (
@@ -119,7 +124,9 @@ export default function Dashboard({
   );
 }
 
-function EmptyState({ activeFolder }) {
+function EmptyState({ activeFolder, searchQuery }) {
+  const isSearchEmpty = Boolean(searchQuery);
+
   return (
     <div className="empty-state">
       <div className="empty-icon">
@@ -131,11 +138,19 @@ function EmptyState({ activeFolder }) {
         </svg>
       </div>
       <h3 className="empty-title">
-        {activeFolder === 'all' ? 'Vaša garaža je prazna' : 'V tej mapi ni vozil'}
+        {isSearchEmpty
+          ? 'Ni zadetkov za iskanje'
+          : activeFolder === 'all' ? 'Vaša garaža je prazna' : 'V tej mapi ni vozil'}
       </h3>
       <p className="empty-desc">
-        Brskajte po <strong>avto.net</strong> in kliknite{' '}
-        <span className="inline-badge">Shrani v garažo</span> na kateremkoli oglasu.
+        {isSearchEmpty ? (
+          <>Poskusite z drugim naslovom, ceno, letnikom ali gorivom.</>
+        ) : (
+          <>
+            Brskajte po <strong>avto.net</strong> in kliknite{' '}
+            <span className="inline-badge">Shrani v garažo</span> na kateremkoli oglasu.
+          </>
+        )}
       </p>
     </div>
   );

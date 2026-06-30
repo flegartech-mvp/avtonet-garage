@@ -65,10 +65,6 @@ function analyzeMileageAge(specs, score) {
   if (km && year) {
     const age = currentYear - year;
 
-    // Bug 12 fix: when age === 0 (current-year vehicle) dividing by zero
-    // produced `annualKm = km` (the raw total), causing a current-year demo car
-    // with e.g. 35,000 km to be flagged as "possible taxi use" (>30k/year).
-    // Skip the annual-km analysis for age ≤ 0.
     if (age <= 0) return;
 
     const annualKm = km / age;
@@ -174,11 +170,6 @@ export function analyzeVehicle(vehicleData) {
     priceVerdict: null,
   };
 
-  // Bug 10 fix: previously JSON.stringify(vehicleData.specs) was included,
-  // which dumped raw JSON into the text scan.  This caused false red-flag
-  // matches — e.g. specs.color = "Damaged silver" triggering the "damaged"
-  // pattern, or future spec keys accidentally matching keyword patterns.
-  // Fix: use only the human-readable spec values (not keys or JSON syntax).
   const fullText = [
     vehicleData.title,
     vehicleData.description,

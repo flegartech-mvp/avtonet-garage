@@ -18,10 +18,9 @@ const DEFAULT_SETTINGS = {
 
 const MAX_PRICE_HISTORY = 100;
 
-// ─── Write-queue mutex (Bug 8) ────────────────────────────────────────────────
-// All vehicle writes are serialized through this chain so that concurrent
-// read-modify-write operations (e.g. a manual save racing with the monitoring
-// cycle) never clobber each other.
+// ─── Write-queue mutex ───────────────────────────────────────────────────────
+// Serialize read-modify-write operations so background checks and popup actions
+// cannot clobber each other when they touch storage at the same time.
 
 let _writeChain = Promise.resolve();
 
@@ -35,7 +34,7 @@ function serialized(fn) {
 
 export async function getVehicles() {
   const r = await chrome.storage.local.get(KEYS.VEHICLES);
-  return r[KEYS.VEHICLES] ?? [];
+  return Array.isArray(r[KEYS.VEHICLES]) ? r[KEYS.VEHICLES] : [];
 }
 
 export async function getVehicleById(id) {
@@ -91,57 +90,67 @@ export function updateVehicleStatus(id, patch) {
 
 export async function getFolders() {
   const r = await chrome.storage.local.get(KEYS.FOLDERS);
-  return r[KEYS.FOLDERS] ?? DEFAULT_FOLDERS;
+  const folders = Array.isArray(r[KEYS.FOLDERS]) ? r[KEYS.FOLDERS] : [];
+  if (!folders.length) return cloneDefaultFolders();
+
+  const byId = new Map(folders.filter((folder) => folder?.id).map((folder) => [folder.id, folder]));
+  return cloneDefaultFolders()
+    .map((folder) => ({ ...folder, ...(byId.get(folder.id) ?? {}) }))
+    .concat(folders.filter((folder) => folder?.id && !DEFAULT_FOLDERS.some((item) => item.id === folder.id)));
 }
 
 export async function upsertFolder(folder) {
-  const folders = await getFolders();
-  const idx = folders.findIndex((f) => f.id === folder.id);
-  if (idx >= 0) {
-    folders[idx] = { ...folders[idx], ...folder };
-  } else {
-    folders.push(folder);
-  }
-  await chrome.storage.local.set({ [KEYS.FOLDERS]: folders });
-  return folders;
+  return serialized(async () => {
+    const folders = await getFolders();
+    const idx = folders.findIndex((f) => f.id === folder.id);
+    const normalizedFolder = normalizeFolder(folder);
+    if (idx >= 0) {
+      folders[idx] = normalizeFolder({ ...folders[idx], ...normalizedFolder });
+    } else {
+      folders.push(normalizedFolder);
+    }
+    await chrome.storage.local.set({ [KEYS.FOLDERS]: folders });
+    return folders;
+  });
 }
 
 export async function removeFolder(folderId) {
-  const folders = await getFolders();
-  // Bug 1 fix: keep locked (system) folders unconditionally; only remove the
-  // specific target folder.  The old condition `f.id !== folderId && !f.locked`
-  // accidentally deleted every locked folder (e.g. "Vsa vozila") on each call.
-  const filtered = folders.filter(
-    (f) => f.locked || f.id !== folderId
-  );
-  await chrome.storage.local.set({ [KEYS.FOLDERS]: filtered });
-  // Reassign orphaned vehicles to 'all'
-  const vehicles = await getVehicles();
-  const updated = vehicles.map((v) =>
-    v.folderId === folderId ? { ...v, folderId: 'all' } : v
-  );
-  await chrome.storage.local.set({ [KEYS.VEHICLES]: updated });
-  return filtered;
+  return serialized(async () => {
+    const folders = await getFolders();
+    const target = folders.find((f) => f.id === folderId);
+    if (!target || target.locked) return folders;
+
+    const filtered = folders.filter((f) => f.id !== folderId);
+    await chrome.storage.local.set({ [KEYS.FOLDERS]: filtered });
+    const vehicles = await getVehicles();
+    const updated = vehicles.map((v) =>
+      v.folderId === folderId ? { ...v, folderId: 'all' } : v
+    );
+    await chrome.storage.local.set({ [KEYS.VEHICLES]: updated });
+    return filtered;
+  });
 }
 
 // ─── Notifications ───────────────────────────────────────────────────────────
 
 export async function getNotifications() {
   const r = await chrome.storage.local.get(KEYS.NOTIFICATIONS);
-  return r[KEYS.NOTIFICATIONS] ?? [];
+  return Array.isArray(r[KEYS.NOTIFICATIONS]) ? r[KEYS.NOTIFICATIONS] : [];
 }
 
 export async function addNotification(notification) {
-  const notifications = await getNotifications();
-  const entry = {
-    id: `notif_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-    read: false,
-    createdAt: Date.now(),
-    ...notification,
-  };
-  const trimmed = [entry, ...notifications].slice(0, 100);
-  await chrome.storage.local.set({ [KEYS.NOTIFICATIONS]: trimmed });
-  return trimmed;
+  return serialized(async () => {
+    const notifications = await getNotifications();
+    const entry = {
+      id: `notif_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      read: false,
+      createdAt: Date.now(),
+      ...notification,
+    };
+    const trimmed = [entry, ...notifications].slice(0, 100);
+    await chrome.storage.local.set({ [KEYS.NOTIFICATIONS]: trimmed });
+    return trimmed;
+  });
 }
 
 export async function markAllNotificationsRead() {
@@ -174,32 +183,60 @@ export async function exportData() {
 }
 
 export async function clearAllData() {
-  await chrome.storage.local.set({
-    [KEYS.VEHICLES]: [],
-    [KEYS.FOLDERS]: DEFAULT_FOLDERS,
-    [KEYS.NOTIFICATIONS]: [],
-    [KEYS.SETTINGS]: DEFAULT_SETTINGS,
+  return serialized(async () => {
+    const folders = cloneDefaultFolders();
+    const settings = normalizeSettings(DEFAULT_SETTINGS);
+    await chrome.storage.local.set({
+      [KEYS.VEHICLES]: [],
+      [KEYS.FOLDERS]: folders,
+      [KEYS.NOTIFICATIONS]: [],
+      [KEYS.SETTINGS]: settings,
+    });
+    return {
+      vehicles: [],
+      folders,
+      notifications: [],
+      settings,
+    };
   });
-  return {
-    vehicles: [],
-    folders: DEFAULT_FOLDERS,
-    notifications: [],
-    settings: DEFAULT_SETTINGS,
-  };
 }
 
 // ─── Settings ────────────────────────────────────────────────────────────────
 
 export async function getSettings() {
   const r = await chrome.storage.local.get(KEYS.SETTINGS);
-  return { ...DEFAULT_SETTINGS, ...(r[KEYS.SETTINGS] ?? {}) };
+  return normalizeSettings({ ...DEFAULT_SETTINGS, ...(r[KEYS.SETTINGS] ?? {}) });
 }
 
 export async function saveSettings(patch) {
-  const current = await getSettings();
-  const merged = { ...current, ...patch };
-  await chrome.storage.local.set({ [KEYS.SETTINGS]: merged });
-  return merged;
+  return serialized(async () => {
+    const current = await getSettings();
+    const merged = normalizeSettings({ ...current, ...patch });
+    await chrome.storage.local.set({ [KEYS.SETTINGS]: merged });
+    return merged;
+  });
+}
+
+function cloneDefaultFolders() {
+  return DEFAULT_FOLDERS.map((folder) => ({ ...folder }));
+}
+
+function normalizeFolder(folder) {
+  return {
+    id: String(folder.id),
+    name: String(folder.name ?? '').trim().slice(0, 40) || 'Mapa',
+    color: /^#[0-9a-f]{6}$/i.test(folder.color) ? folder.color : '#6366f1',
+    locked: Boolean(folder.locked),
+  };
+}
+
+function normalizeSettings(settings) {
+  return {
+    ...DEFAULT_SETTINGS,
+    ...settings,
+    checkIntervalMinutes: Math.max(1, Math.min(1440, Math.round(Number(settings.checkIntervalMinutes) || 60))),
+    notificationsEnabled: settings.notificationsEnabled !== false,
+  };
 }
 
 function normalizeVehicle(vehicle) {
