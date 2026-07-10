@@ -80,7 +80,7 @@ export default function VehicleDetail({ vehicle, folders, onClose, onDataChange 
               <div className="gallery-main">
                 <img
                   src={images[activeImage]}
-                  alt={`${vehicle.title} — fotografija ${activeImage + 1}`}
+                  alt={`${vehicle.title}, fotografija ${activeImage + 1}`}
                   onError={(e) => { e.currentTarget.style.display = 'none'; }}
                 />
                 {images.length > 1 && (
@@ -110,7 +110,7 @@ export default function VehicleDetail({ vehicle, folders, onClose, onDataChange 
           <div className="modal-info">
             {/* Price + status */}
             <div className="detail-price-row">
-              <span className="detail-price">{vehicle.price || '—'}</span>
+              <span className="detail-price">{vehicle.price || 'Ni cene'}</span>
               <StatusBadge status={vehicle.status} />
             </div>
 
@@ -232,7 +232,7 @@ export default function VehicleDetail({ vehicle, folders, onClose, onDataChange 
                     </div>
                   )}
                   <div className="seller-type-badge">
-                    {vehicle.sellerInfo.type === 'dealer' ? '🏢 Trgovec' : '👤 Zasebnik'}
+                    {vehicle.sellerInfo.type === 'dealer' ? 'Trgovec' : 'Zasebnik'}
                   </div>
                 </div>
               </div>

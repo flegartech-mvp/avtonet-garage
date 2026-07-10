@@ -55,10 +55,10 @@ function analyzeMileageAge(specs, score) {
     score.positives.push({ label: 'Nizka kilometrina', detail: `${km.toLocaleString('sl-SI')} km je pod povprečjem.` });
     score.points += 15;
   } else if (km > 250000) {
-    score.redFlags.push({ label: 'Zelo visoka kilometrina', detail: `${km.toLocaleString('sl-SI')} km — pričakujte večjo obrabo.` });
+    score.redFlags.push({ label: 'Zelo visoka kilometrina', detail: `${km.toLocaleString('sl-SI')} km - pričakujte večjo obrabo.` });
     score.points -= 20;
   } else if (km > 150000) {
-    score.warnings.push({ label: 'Visoka kilometrina', detail: `${km.toLocaleString('sl-SI')} km — natančno preverite pogonski sklop.` });
+    score.warnings.push({ label: 'Visoka kilometrina', detail: `${km.toLocaleString('sl-SI')} km - natančno preverite pogonski sklop.` });
     score.points -= 10;
   }
 
@@ -72,7 +72,7 @@ function analyzeMileageAge(specs, score) {
       score.positives.push({ label: 'Podpovprečna letna kilometrina', detail: `~${Math.round(annualKm).toLocaleString('sl-SI')} km/leto.` });
       score.points += 10;
     } else if (annualKm > 30000) {
-      score.warnings.push({ label: 'Nadpovprečna letna kilometrina', detail: `~${Math.round(annualKm).toLocaleString('sl-SI')} km/leto — možna uporaba kot taksi/dostava.` });
+      score.warnings.push({ label: 'Nadpovprečna letna kilometrina', detail: `~${Math.round(annualKm).toLocaleString('sl-SI')} km/leto - možna uporaba kot taksi/dostava.` });
       score.points -= 8;
     }
   }
@@ -142,7 +142,7 @@ function scanText(text, score) {
 
 function analyzeImages(images, score) {
   if (images.length >= 10) {
-    score.positives.push({ label: 'Veliko fotografij', detail: `${images.length} fotografij — prodajalec je pregleden.` });
+    score.positives.push({ label: 'Veliko fotografij', detail: `${images.length} fotografij - prodajalec je pregleden.` });
     score.points += 8;
   } else if (images.length <= 2) {
     score.warnings.push({ label: 'Zelo malo fotografij', detail: 'Malo fotografij otežuje oceno stanja vozila.' });

@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { clearNotifications } from '../../utils/storage.js';
 
 const TYPE_CONFIG = {
-  price_change: { icon: '💰', label: 'Sprememba cene', cls: 'notif--price'   },
-  sold:         { icon: '🔴', label: 'Prodano',         cls: 'notif--sold'    },
-  removed:      { icon: '🗑️', label: 'Odstranjeno',     cls: 'notif--removed' },
-  saved:        { icon: '✅', label: 'Shranjeno',        cls: 'notif--saved'   },
+  price_change: { icon: 'EUR', label: 'Sprememba cene', cls: 'notif--price'   },
+  sold:         { icon: '!',   label: 'Prodano',         cls: 'notif--sold'    },
+  removed:      { icon: 'X',   label: 'Odstranjeno',     cls: 'notif--removed' },
+  saved:        { icon: 'OK',  label: 'Shranjeno',        cls: 'notif--saved'   },
 };
 
 function casNazaj(ts) {
@@ -77,7 +77,7 @@ export default function NotificationsPanel({ notifications, onDataChange }) {
           <React.Fragment key={day}>
             <div className="notif-day-divider">{day}</div>
             {items.map((n) => {
-              const config = TYPE_CONFIG[n.type] ?? { icon: 'ℹ️', label: n.type, cls: '' };
+              const config = TYPE_CONFIG[n.type] ?? { icon: 'i', label: n.type, cls: '' };
               return (
                 <div
                   key={n.id}

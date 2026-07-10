@@ -5,6 +5,7 @@
     "scripts": {
         "build": "webpack --mode production",
         "dev": "webpack --mode development --watch",
+        "preview": "npx --yes http-server dist -p 4173 -c-1",
         "lint": "eslint src tests webpack.config.js generate-icons.js generate-icons-node.js",
         "test": "vitest run",
         "clean": "rimraf dist",

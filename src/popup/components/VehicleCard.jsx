@@ -107,12 +107,12 @@ export default function VehicleCard({ vehicle, folders, onSelect, onDataChange }
       {/* Content */}
       <div className="card-body">
         <h3 className="card-title" title={vehicle.title}>
-          {vehicle.title || 'Unknown vehicle'}
+          {vehicle.title || 'Neznano vozilo'}
         </h3>
 
         <div className="card-meta">
           <div className="card-price">
-            <span className="price-value">{vehicle.price || '—'}</span>
+            <span className="price-value">{vehicle.price || 'Ni cene'}</span>
             {priceDiff !== null && priceDiff !== 0 && (
               <span className={`price-delta ${priceDiff < 0 ? 'delta--down' : 'delta--up'}`}>
                 {priceDiff < 0 ? '▼' : '▲'} {Math.abs(priceDiff).toLocaleString('sl-SI')} €

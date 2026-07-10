@@ -44,7 +44,9 @@ export default function Dashboard({
     const source = allVehicles ?? vehicles;
     const counts = { all: source.length };
     source.forEach((v) => {
-      counts[v.folderId] = (counts[v.folderId] ?? 0) + 1;
+      if (v.folderId && v.folderId !== 'all') {
+        counts[v.folderId] = (counts[v.folderId] ?? 0) + 1;
+      }
     });
     return counts;
   }, [allVehicles, vehicles]);
@@ -60,6 +62,24 @@ export default function Dashboard({
       }
     });
     return counts;
+  }, [allVehicles, vehicles]);
+
+  const summary = useMemo(() => {
+    const source = allVehicles ?? vehicles;
+    const active = source.filter((v) => v.status === 'active').length;
+    const alerts = source.filter((v) => v.status === 'price_change' || v.status === 'sold' || v.status === 'removed').length;
+    const priceDrops = source.filter((v) => {
+      const history = v.priceHistory ?? [];
+      if (history.length < 2) return false;
+      return history[history.length - 1].price < history[history.length - 2].price;
+    }).length;
+
+    return [
+      { label: 'Shranjeno', value: source.length },
+      { label: 'Aktivni oglasi', value: active },
+      { label: 'Spremembe', value: alerts },
+      { label: 'Znižane cene', value: priceDrops },
+    ];
   }, [allVehicles, vehicles]);
 
   return (
@@ -86,6 +106,17 @@ export default function Dashboard({
 
       {/* Main grid */}
       <div className="dashboard-main">
+        {(allVehicles ?? vehicles).length > 0 && (
+          <div className="dashboard-summary" aria-label="Povzetek garaže">
+            {summary.map((item) => (
+              <div key={item.label} className="summary-tile">
+                <span className="summary-value">{item.value}</span>
+                <span className="summary-label">{item.label}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
         {sorted.length > 0 && (
           <div className="toolbar">
             <span className="count-label">
