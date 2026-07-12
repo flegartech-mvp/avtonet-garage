@@ -34,6 +34,8 @@ Load in Chrome:
 2. Enable **Developer mode** (top-right toggle)
 3. Click **Load unpacked** → select the `dist/` folder
 
+Create a Chrome Web Store ZIP with `npm run package`. The package is written to `dist/avtonet-garaza-<version>.zip`; it contains only the production build, not tests, source maps, dependencies, or source files.
+
 ---
 
 ## Project Structure

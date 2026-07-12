@@ -161,7 +161,7 @@ function encodePNG(S, pixels) {
 }
 
 // ── Main ───────────────────────────────────────────────────────────────────
-const SIZES   = [16, 48, 128];
+const SIZES   = [16, 32, 48, 128];
 const OUT_DIRS = [
   path.join(__dirname, 'src', 'icons'),
   path.join(__dirname, 'dist', 'icons'),

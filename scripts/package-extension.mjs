@@ -21,7 +21,7 @@ if (!existsSync(DIST)) {
 }
 
 const { version } = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
-const out = join(ROOT, `avtonet-garaza-${version}.zip`);
+const out = join(DIST, `avtonet-garaza-${version}.zip`);
 
 function walk(dir) {
   const files = [];
